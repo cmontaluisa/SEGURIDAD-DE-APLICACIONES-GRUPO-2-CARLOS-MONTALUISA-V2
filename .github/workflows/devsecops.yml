@@ -114,7 +114,9 @@ jobs:
 
       - name: Run unit tests
         # Ejecutamos sobre la solución para que corra UtilitiesTest
-        run: dotnet test SecurePipeLine.slnx --configuration Release --no-build --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/TestResults
+          dotnet test SecurePipeLine.slnx --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory $GITHUB_WORKSPACE/TestResults
 
       - name: Publish test results
         uses: dorny/test-reporter@v1
