@@ -38,9 +38,17 @@ jobs:
 
       # 2. SAST rápido con Semgrep
       - name: Semgrep Scan
-        uses: returntocorp/semgrep-action@v1
+        run: |
+          # Instalar semgrep (si no está ya en el entorno)
+          python -m pip install semgrep
+          # Ejecutar el escaneo y generar el archivo SARIF
+          semgrep scan --config auto --sarif --output semgrep.sarif
+        
+      - name: Upload SARIF report
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          generateSarif: "1"
+          sarif_file: semgrep.sarif
+        if: always()
 
       # 3. Análisis de dependencias (OWASP)
       - name: OWASP Dependency Check
