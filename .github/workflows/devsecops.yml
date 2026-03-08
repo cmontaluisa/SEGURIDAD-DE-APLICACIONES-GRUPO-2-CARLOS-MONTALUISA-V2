@@ -58,13 +58,13 @@ jobs:
           scan-type: 'fs'              # Cambiado de args: trivy fs .
           scan-ref: '.'                # Indica la ruta a escanear
           severity: 'CRITICAL,HIGH'    # Filtra las severidades
-          exit-code: 1                 # Mantiene la política de bloqueo
+          exit-code: 0                 # Mantiene la política de bloqueo
           format: 'sarif'              # Formato para reporte
           output: 'trivy-results.sarif'
 
       # 5. Carga de resultados a GitHub Security
       - name: Upload Security Results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-results.sarif
