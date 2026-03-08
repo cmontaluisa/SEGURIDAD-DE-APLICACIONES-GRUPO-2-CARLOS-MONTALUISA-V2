@@ -112,14 +112,14 @@ jobs:
 
       - name: Run unit tests
         # Ejecutamos sobre la solución para que corra UtilitiesTest
-        run: dotnet test ${{ env.SOLUTION_NAME }} --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test SecurePipeLine.slnx --configuration Release --no-build --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
 
       - name: Publish test results
         uses: dorny/test-reporter@v1
         if: always()
         with:
           name: Test Results (.NET 8)
-          path: '**/*.trx'
+          path: 'TestResults/*.trx'
           reporter: dotnet-trx
 
 #########################################################
