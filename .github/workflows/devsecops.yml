@@ -155,9 +155,7 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: csharp
-
-      - name: Build for CodeQL
-        run: dotnet build ${{ env.SOLUTION_NAME }} --configuration Release
-
+          # Esto le indica a CodeQL que use el motor de compilación automático
+          build-mode: autobuild
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v4
