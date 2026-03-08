@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Utilities/">
+    <Project Path="Utilities/Utilities.csproj" />
+  </Folder>
+  <Folder Name="/UtilitiesTest/">
+    <Project Path="UtilitiesTest/UtilitiesTest.csproj" />
+  </Folder>
+</Solution>
