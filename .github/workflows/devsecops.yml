@@ -55,11 +55,11 @@ jobs:
       - name: Trivy Scan
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: fs
-          # Filtramos para buscar solo vulnerabilidades (vuln) y evitar ruido
-          args: --severity CRITICAL,HIGH --exit-code 1 --scanners vuln
-          exit-code: 1
-          format: 'sarif'
+          scan-type: 'fs'              # Cambiado de args: trivy fs .
+          scan-ref: '.'                # Indica la ruta a escanear
+          severity: 'CRITICAL,HIGH'    # Filtra las severidades
+          exit-code: 1                 # Mantiene la política de bloqueo
+          format: 'sarif'              # Formato para reporte
           output: 'trivy-results.sarif'
 
       # 5. Carga de resultados a GitHub Security
