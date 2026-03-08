@@ -4,7 +4,7 @@ using System.Text;
 namespace UPS.TestUnit
 {
     /// <summary>
-    /// Unit Test 
+    /// Unit Test Pruebas
     /// </summary>
     public class EncodingUtilsTest
     {
