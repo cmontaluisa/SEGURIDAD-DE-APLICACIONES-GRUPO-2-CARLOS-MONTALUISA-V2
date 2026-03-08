@@ -155,7 +155,12 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: csharp
-          # Esto le indica a CodeQL que use el motor de compilación automático
-          build-mode: autobuild
-      - name: Run CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+          # "none" desactiva la construcción automática (autobuild) 
+          # y nos da control total sobre la compilación.
+          build-mode: none 
+
+      - name: Build for CodeQL
+        # Al poner build-mode en "none", este paso se vuelve obligatorio.
+        # CodeQL "rastreará" este comando para crear la base de datos.
+        run: |
+          dotnet build ${{ env.SOLUTION_NAME }} --configuration Release
