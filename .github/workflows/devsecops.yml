@@ -57,7 +57,7 @@ jobs:
         with:
           scan-type: fs
           # Filtramos para buscar solo vulnerabilidades (vuln) y evitar ruido
-          severity: 'CRITICAL,HIGH'
+          args: --severity CRITICAL,HIGH --exit-code 1 --scanners vuln
           exit-code: 1
           format: 'sarif'
           output: 'trivy-results.sarif'
