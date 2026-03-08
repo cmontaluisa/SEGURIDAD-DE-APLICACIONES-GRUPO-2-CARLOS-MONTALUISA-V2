@@ -155,12 +155,8 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: csharp
-          # "none" desactiva la construcción automática (autobuild) 
-          # y nos da control total sobre la compilación.
-          build-mode: none 
+          build-mode: autobuild 
 
       - name: Build for CodeQL
-        # Al poner build-mode en "none", este paso se vuelve obligatorio.
-        # CodeQL "rastreará" este comando para crear la base de datos.
         run: |
           dotnet build ${{ env.SOLUTION_NAME }} --configuration Release
