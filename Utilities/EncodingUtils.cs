@@ -137,6 +137,18 @@ namespace UPS.Utilities
                 return false;
             }
         }
+        /// <summary>
+        /// Convierte una cadena (UTF-16) a un array de bytes en formato UTF-8
+        /// </summary>
+        /// <param name="text">Texto en UTF-16.</param>
+        /// <returns>Array de bytes en UTF-8.</returns>
+        public byte[] ConvertUtf16ToUtf8(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return [];
+
+            return Encoding.UTF8.GetBytes(text);
+        }
     }
 }
 

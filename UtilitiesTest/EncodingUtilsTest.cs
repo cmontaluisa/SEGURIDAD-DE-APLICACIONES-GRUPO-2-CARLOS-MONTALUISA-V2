@@ -176,5 +176,19 @@ namespace UPS.TestUnit
             Assert.False(EncodingUtils.Current.IsBase64String(string.Empty));
             Assert.False(EncodingUtils.Current.IsBase64String("   "));
         }
+
+        [Fact]
+        public void ConvertUtf16ToUtf8_ShouldConvertCorrectly()
+        {
+            // Arrange
+            string input = "Hola Mundo";
+            byte[] expected = [72, 111, 108, 97, 32, 77, 117, 110, 100, 111];
+
+            // Act
+            byte[] result = EncodingUtils.Current.ConvertUtf16ToUtf8(input);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
     }
 }
