@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace UPS.Utilities
 {
     /// <summary>
-    /// Clase con métodos para codificar y decodificar cadenas en Base64
+    /// Clase con métodos para codificar y decodificar cadenas en Base64 Hola
     /// </summary>
     public sealed class EncodingUtils
     {
