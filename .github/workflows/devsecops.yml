@@ -1,110 +1,341 @@
 name: DevSecOps Pipeline (.NET 8)
 
+
+
 on:
+
   push:
+
     branches: [ main, master ]
+
   pull_request:
+
     branches: [ main, master ]
+
+
 
 permissions:
+
   contents: read
+
   checks: write
+
   pull-requests: write
+
   security-events: write
 
+
+
 env:
+
   DOTNET_VERSION: '8.0.x'
+
   SOLUTION_NAME: 'SecurePipeLine.slnx' # Referencia a tu nueva solución
+
+
 
 jobs:
 
+
+
 #########################################################
+
 # SECURITY SCANS (EL FILTRO PRINCIPAL)
+
 #########################################################
+
+
 
   security-scan:
+
     name: Security Scans
+
     runs-on: ubuntu-latest
+
+
 
     steps:
+
       - name: Checkout
+
         uses: actions/checkout@v4
+
         with:
+
           fetch-depth: 0
 
+
+
       # 1. Escaneo de Secretos (Gitleaks)
+
       - name: Secret Scan
+
         uses: gitleaks/gitleaks-action@v2
+
         env:
+
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
+
       # 2. SAST rápido con Semgrep
+
       - name: Semgrep Scan
+
         run: |
+
           # Instalar semgrep (si no está ya en el entorno)
+
           python -m pip install semgrep
+
           # Ejecutar el escaneo y generar el archivo SARIF
+
           semgrep scan --config auto --sarif --output semgrep.sarif
+
         
+
       - name: Upload SARIF report
+
         uses: github/codeql-action/upload-sarif@v4
+
         with:
+
           sarif_file: semgrep.sarif
+
         if: always()
+
+
 
       # 3. Análisis de dependencias (OWASP)
+
       - name: OWASP Dependency Check
+
         uses: dependency-check/Dependency-Check_Action@main
+
         with:
+
           project: "SecurePipeLine"
+
           path: "."
+
           format: "HTML"
+
           out: "reports"
 
+
+
       # 4. Escaneo de vulnerabilidades (Trivy)
+
       - name: Trivy Scan
+
         uses: aquasecurity/trivy-action@master
+
         with:
+
           scan-type: 'fs'              # Cambiado de args: trivy fs .
+
           scan-ref: '.'                # Indica la ruta a escanear
+
           severity: 'CRITICAL,HIGH'    # Filtra las severidades
+
           exit-code: 0                 # Mantiene la política de bloqueo
+
           format: 'sarif'              # Formato para reporte
+
           output: 'trivy-results.sarif'
 
+
+
       # 5. Carga de resultados a GitHub Security
+
       - name: Upload Security Results
+
         uses: github/codeql-action/upload-sarif@v4
+
         if: always()
+
         with:
+
           sarif_file: trivy-results.sarif
 
+
+
       # 6. Generación de SBOM
+
       - name: Generate SBOM
+
         uses: anchore/sbom-action@v0
+
         with:
+
           format: spdx-json
+
           output-file: sbom.spdx.json
 
+
+
       # 7. Guardar reportes como artefactos
+
       - name: Archive Security Reports
+
         uses: actions/upload-artifact@v4
+
         if: always()
+
         with:
+
           name: security-reports
+
           path: |
+
             reports/
+
             sbom.spdx.json
 
+
+
 #########################################################
+
 # BUILD AND TEST (SOLO SI SEGURIDAD APRUEBA)
+
 #########################################################
+
+
 
   build-and-test:
+
     name: Build and Test (.NET 8)
+
     runs-on: ubuntu-latest
+
     needs: security-scan
 
+
+
+    steps:
+
+      - name: Checkout
+
+        uses: actions/checkout@v4
+
+
+
+      - name: Setup .NET
+
+        uses: actions/setup-dotnet@v4
+
+        with:
+
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+          cache: true
+
+          cache-dependency-path: '**/packages.lock.json'
+
+
+
+      - name: Restore
+
+        run: dotnet restore ${{ env.SOLUTION_NAME }}
+
+
+
+      - name: Build
+
+        run: dotnet build ${{ env.SOLUTION_NAME }} --configuration Release --no-restore
+
+
+
+      - name: Run unit tests
+
+        # Ejecutamos sobre la solución para que corra UtilitiesTest
+
+        run: |
+
+          mkdir -p $GITHUB_WORKSPACE/TestResults
+
+          dotnet test SecurePipeLine.slnx --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory $GITHUB_WORKSPACE/TestResults
+
+
+
+      - name: Publish test results
+
+        uses: dorny/test-reporter@v1
+
+        if: always()
+
+        with:
+
+          name: Test Results (.NET 8)
+
+          path: 'TestResults/*.trx'
+
+          reporter: dotnet-trx
+
+
+
+#########################################################
+
+# ADVANCED SAST (ANÁLISIS PROFUNDO FINAL)
+
+#########################################################
+
+
+
+  codeql-analysis:
+
+    name: CodeQL Analysis
+
+    runs-on: ubuntu-latest
+
+    needs: build-and-test
+
+
+
+    permissions:
+
+      security-events: write
+
+      contents: read
+
+
+
+    steps:
+
+      - name: Checkout
+
+        uses: actions/checkout@v4
+
+
+
+      - name: Initialize CodeQL
+
+        uses: github/codeql-action/init@v4
+
+        with:
+
+          languages: csharp
+
+          build-mode: autobuild 
+
+
+
+      - name: Build for CodeQL
+
+        run: |
+
+          dotnet build ${{ env.SOLUTION_NAME }} --configuration Release
+
+
+          #########################################################
+# DEPLOYMENT (CI/CD COMPLETADO)
+#########################################################
+
+  deploy:
+    name: Package and Publish
+    needs: codeql-analysis # Solo despliega si TODO lo anterior pasó
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Solo en main
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -113,52 +344,16 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
 
-      - name: Restore
-        run: dotnet restore ${{ env.SOLUTION_NAME }}
+      - name: Publish Application
+        # Empaqueta la app para producción
+        run: dotnet publish ${{ env.SOLUTION_NAME }} --configuration Release --output ./publish
 
-      - name: Build
-        run: dotnet build ${{ env.SOLUTION_NAME }} --configuration Release --no-restore
-
-      - name: Run unit tests
-        # Ejecutamos sobre la solución para que corra UtilitiesTest
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/TestResults
-          dotnet test SecurePipeLine.slnx --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory $GITHUB_WORKSPACE/TestResults
-
-      - name: Publish test results
-        uses: dorny/test-reporter@v1
-        if: always()
+      - name: Upload Deployment Artifact
+        # Esto genera el "Artefacto de Despliegue" solicitado
+        uses: actions/upload-artifact@v4
         with:
-          name: Test Results (.NET 8)
-          path: 'TestResults/*.trx'
-          reporter: dotnet-trx
+          name: app-production-package
+          path: ./publish
 
-#########################################################
-# ADVANCED SAST (ANÁLISIS PROFUNDO FINAL)
-#########################################################
-
-  codeql-analysis:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    needs: build-and-test
-
-    permissions:
-      security-events: write
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: csharp
-          build-mode: autobuild 
-
-      - name: Build for CodeQL
-        run: |
-          dotnet build ${{ env.SOLUTION_NAME }} --configuration Release
+          
