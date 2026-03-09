@@ -162,3 +162,32 @@ jobs:
       - name: Build for CodeQL
         run: |
           dotnet build ${{ env.SOLUTION_NAME }} --configuration Release
+
+#########################################################
+# DEPLOYMENT (CI/CD COMPLETADO)
+#########################################################
+
+  deploy:
+    name: Package and Publish
+    needs: codeql-analysis # Solo despliega si TODO lo anterior pasó
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Solo en main
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish Application
+        # Empaqueta la app para producción
+        run: dotnet publish ${{ env.SOLUTION_NAME }} --configuration Release --output ./publish
+
+      - name: Upload Deployment Artifact
+        # Esto genera el "Artefacto de Despliegue" solicitado
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-production-package
+          path: ./publish
