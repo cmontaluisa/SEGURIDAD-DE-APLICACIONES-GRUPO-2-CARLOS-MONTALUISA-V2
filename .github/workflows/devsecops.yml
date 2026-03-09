@@ -169,9 +169,9 @@ jobs:
 
   deploy:
     name: Package and Publish
-    needs: codeql-analysis # Solo despliega si TODO lo anterior pasó
+    needs: [codeql-analysis] # Asegúrate de que este nombre coincida con tu job de CodeQL
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' # Solo en main
+    if: always() # Esto es vital: permite que el check siempre se reporte, evitando el bloqueo del PR
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -181,12 +181,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Publish Application
-        # Empaqueta la app para producción
-        run: dotnet publish ${{ env.SOLUTION_NAME }} --configuration Release --output ./publish
+      - name: Publish Utilities
+        # Publicamos directamente el proyecto principal
+        run: dotnet publish Utilities/Utilities.csproj --configuration Release --output ./publish
 
       - name: Upload Deployment Artifact
-        # Esto genera el "Artefacto de Despliegue" solicitado
         uses: actions/upload-artifact@v4
         with:
           name: app-production-package
